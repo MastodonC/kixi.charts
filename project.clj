@@ -11,9 +11,18 @@
 
   :plugins [[lein-cljsbuild "1.0.4"]]
 
-  :cljsbuild {:builds {:test {:source-paths ["src"]
-                              :compiler {:output-to     "resources/js/kixi_charts.js"
-                                         :output-dir    "resources/js/out"
-                                         :optimizations :none
-                                         :source-map true
-                                         :pretty-print true}}}})
+  :cljsbuild {:builds [{:id "test"
+                        :source-paths ["src"]
+                        :compiler {:output-to     "resources/js/kixi_charts.js"
+                                   :output-dir    "resources/js/out"
+                                   :optimizations :none
+                                   :source-map true
+                                   :pretty-print true}}
+                       ;; examples
+                       {:id "simple-line-chart"
+                        :source-paths ["src" "examples/line_chart/src"]
+                        :compiler {:output-to "examples/line_chart/example.js"
+                                   :output-dir "examples/line_chart/out"
+                                   :source-map true
+                                   :optimizations :none}}
+                       ]})
