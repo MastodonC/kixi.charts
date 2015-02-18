@@ -7,36 +7,30 @@
 (when (not agent/IE)
   (enable-console-print!))
 
-(defn container-size
-  ""
-  [id]
-  (let [e (.getElementById js/document id)
-        x (.-clientWidth e)
-        y (.-clientHeight e)]
-    {:width x :height y}))
-
-(defn get-size [size id]
-  (if-not (nil? (:width size))
-    size
-    (container-size id)))
-
-(defn keywords->str [m]
+(defn keywords->str
+  "Turns all keywords in sequence
+  of maps to strings."
+  [m]
   (->> m
        (map (fn [[k v]] {k (name v)}))
        (apply merge)))
 
-(defn create-svg [div width height margin]
+(defn create-svg
+  "Creates SVG in a div with specified id. Sets
+  width, height and margin."
+  [div width height margin]
   (-> js/d3 (.select div) (.append "svg:svg")
       (.attr #js {:width  (+ width (:left margin) (:right margin))
                   :height (+ height (:top margin) (:bottom margin))})
       (.append "svg:g")
       (.attr #js {:transform (str "translate(" (:left margin) "," (:top margin) ")")})))
 
-(defn draw-chart [{:keys [data size]} opts]
-  (let [data (clj->js data)
+(defn draw-chart [cursor opts]
+  (let [data (clj->js (:data cursor))
         {:keys [id style]} opts
-        {:keys [width height]} (get-size size id)
         {:keys [margin axis-opts]} style
+        width  (-> (.getElementById js/document id) .-clientWidth (- (:left margin) (:right margin)))
+        height (-> (.getElementById js/document id) .-clientHeight (- (:top margin) (:bottom margin)))
         {:keys [x-field x-orientation y-field y-orientation
                 x-axis-title y-axis-title]} (keywords->str axis-opts)
         x       (-> js/d3 .-time (.scale) (.range (to-array [0 width])))
@@ -56,7 +50,7 @@
         (.attr "transform" (str "translate(0," height ")"))
         (.call x-axis))
 
-     (-> svg
+    (-> svg
         (.append "g")
         (.attr "class" "y axis")
         (.call y-axis)
@@ -67,51 +61,60 @@
         (.style "text-anchor" "end")
         (.text y-axis-title))
 
-     (-> svg
-         (.append "path")
-         (.datum data)
-         (.attr "class" "line")
-         (.attr "d" line))))
+    (-> svg
+        (.append "path")
+        (.datum data)
+        (.attr "class" "line")
+        (.attr "d" line))))
 
 (defn simple-line-chart
-  "Cursor must contain the following:
-  :data []
+  "Creates a simple line chart that
+  is styled though CSS.
+
+  Div that will contain the chart has to be created in an
+  ealier step and its id passed in opts.
+  If using Bootstrap, height of that div must be set since
+  Bootstrap sets div height to the size of the content, and
+  the content has not been rendered at this point. We cannot
+  create a chart if the height of the div is 0.
+
+  Cursor must contain the following:
+  :data [{:foo \"a\" :bar \"b\"}
+         {:foo \"c\" :bar \"d\"}]
 
   Options should have:
 
   :id \"chart\"
-  :style {:margin {:top 20 :right 20 :bottom 30 :left 50}}
-  :axis-opts {:x-field :year
-              :x-orientation :bottom
-              :x-axis-title \"Year\"
-              :y-field :value
-              :y-orientation :left
-              :y-axis-title \"Indicator Values\" }
+  :style {:margin {:top 20 :right 20 :bottom 30 :left 50}
+          :min-height 300
+          :axis-opts {:x-field :foo
+                      :x-orientation :bottom
+                      :x-axis-title \"Foo\"
+                      :y-field :bar
+                      :y-orientation :left
+                      :y-axis-title \"Indicator Values\"}}
+
+
 
   Values are an example. "
   [cursor owner {:keys [id] :as opts}]
   (reify
-    om/IWillMount
-    (will-mount [_]
-      (.addEventListener js/window
-                         "resize"
-                         (fn []
-                           (om/update! cursor :size (container-size id)))))
     om/IRender
     (render [_]
       (html
-       [:div {:id id :style {:height "100%" :width "90%"}}]))
+       [:div]))
     om/IDidMount
     (did-mount [_]
-      (let [n (.getElementById js/document id)]
+      (.addEventListener js/window
+                         "resize"
+                         (fn [] (om/refresh! owner)))
+      (let [n    (.getElementById js/document id)]
         (while (.hasChildNodes n)
           (.removeChild n (.-lastChild n)))
-        (draw-chart {:data (:data cursor)
-                     :size (:size cursor)} opts)))
+        (draw-chart cursor opts)))
     om/IDidUpdate
     (did-update [_ _ _]
-      (let [n (.getElementById js/document id)]
+      (let [n    (.getElementById js/document id)]
         (while (.hasChildNodes n)
           (.removeChild n (.-lastChild n)))
-        (draw-chart {:data (:data cursor)
-                     :size (:size cursor)} opts)))))
+        (draw-chart cursor opts)))))

@@ -14,7 +14,7 @@
     om/IRender
     (render [_]
       (html
-       [:div
+       [:div {:id "chart" :style {:width "100%" :height 400}}
         (om/build lc/simple-line-chart (:chart cursor)
                   {:opts {:id "chart"
                           :style {:margin {:top 50 :right 50 :bottom 50 :left 50}

@@ -11,6 +11,8 @@
 
   :plugins [[lein-cljsbuild "1.0.4"]]
 
+  :clean-targets ^{:protect false} ["target" "resources/js"]
+
   :cljsbuild {:builds [{:id "test"
                         :source-paths ["src"]
                         :compiler {:output-to     "resources/js/kixi_charts.js"
