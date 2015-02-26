@@ -22,10 +22,12 @@
 
 
 (defn draw-chart [cursor opts]
-  ;; TODO use scale,domain,extent from d3 for the y calc.  It's
-  ;; not 100% straightforward because of the need to handle
-  ;; ties, where we offset the labels into the 'gap' created by
-  ;; the missing rank.
+  ;; TODO use scale,domain,extent from d3 for the y calc.  It's not
+  ;; 100% straightforward because of the need to handle ties, where we
+  ;; offset the labels into the 'gap' created by the missing
+  ;; rank.
+  ;; Also the extents for each 'column' could be different again because
+  ;; of ties.
   (let [data                       (keywords->str (:data cursor))
         [left-column-heading
          right-column-heading]     (:column-headings cursor)
@@ -39,13 +41,14 @@
         rank-label-psize           12   ; TODO calculate this somehow, query CSS maybe?
         dy                         50
         ypadfactor                 (/ rank-label-psize  (/ height (- max-rank min-rank) ))
-        label-offsets              (atom {}) ; Track whether we've
+        label-offsets              (atom {}) ; We track whether we've
                                              ; seen a rank and offset
-                                             ; the next occurence to
+                                             ; the next occurrence to
                                              ; avoid overlaps.
         ->y                        (fn [rank] (* (- rank min-rank) (/ height (- max-rank min-rank))))
-        ->text-y                   (fn [side rank] (swap! label-offsets update-in [side rank] (fnil inc -1))
-                                     (+ (* (get-in @label-offsets [side rank]) (/ height (- max-rank min-rank))) (->y rank) ))
+        ->text-y                   (fn [side rank]
+                                     (let [offset (get-in (swap! label-offsets update-in [side rank] (fnil inc -1)) [side rank] 0)]
+                                       (->y (+ rank offset)) ))
         svg                        (create-svg (str "#" id) width height margin)
         dxl                        label-width
         dxr                        (- width label-width)]
