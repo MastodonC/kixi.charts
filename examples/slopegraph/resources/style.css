@@ -1,0 +1,49 @@
+html *
+{
+    color: #000 !important;
+    font-family: Arial !important;
+}
+
+.column-line {
+    stroke-width: 1;
+    stroke:#ccc;
+    stroke-dasharray: 2,2;
+
+}
+
+.column-heading-text {
+    font-size: 120%;
+}
+
+.rank-chain {
+    stroke-width: 1;
+    stroke: #ccc;
+}
+
+.rank-chain text {
+    stroke: none;
+}
+
+.rank-chain:hover {
+    stroke-width: 2;
+    stroke: #a00;
+    fill:   #a00;
+}
+
+.rank-chain:hover text {
+    font-weight: bold;
+}
+
+text.rank-number {
+    font-size: 50%;
+    font-weight: bold;
+}
+
+text.rank-label {
+    font-size: 12px;
+}
+
+.rank-chain svg:circle {
+    stroke-width: 2;
+    fill-opacity: 0.25;
+}
